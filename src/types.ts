@@ -221,6 +221,7 @@ export interface SendMessageOptions {
   title?: string;
   useMarkdown?: boolean;
   atUserId?: string | null;
+  atUserIds?: string[];
   log?: any;
   mediaPath?: string;
   filePath?: string;

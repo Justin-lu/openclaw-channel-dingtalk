@@ -43,3 +43,56 @@ export function formatGroupMembers(storePath: string, groupId: string): string |
   }
   return entries.map(([id, name]) => `${name} (${id})`).join(", ");
 }
+
+function extractMentionNames(text: string): string[] {
+  if (!text) {
+    return [];
+  }
+
+  const matches = text.match(/@[^\s@]+/g) || [];
+  const names = matches
+    .map((raw) =>
+      raw
+        .slice(1)
+        .trim()
+        .replace(/[，。,.!?！？:：;；）)】\]}>]+$/g, ""),
+    )
+    .filter(Boolean);
+
+  return Array.from(new Set(names));
+}
+
+export function resolveMentionedUserIds(
+  storePath: string,
+  groupId: string,
+  text: string,
+): string[] {
+  const filePath = groupMembersFilePath(storePath, groupId);
+  let roster: Record<string, string> = {};
+  try {
+    roster = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+  } catch {
+    return [];
+  }
+
+  const mentionedNames = extractMentionNames(text);
+  if (mentionedNames.length === 0) {
+    return [];
+  }
+
+  const lowerNameMap = new Map<string, string[]>();
+  for (const [userId, name] of Object.entries(roster)) {
+    const key = name.toLowerCase();
+    const ids = lowerNameMap.get(key) || [];
+    ids.push(userId);
+    lowerNameMap.set(key, ids);
+  }
+
+  const resolvedIds: string[] = [];
+  for (const name of mentionedNames) {
+    const ids = lowerNameMap.get(name.toLowerCase()) || [];
+    resolvedIds.push(...ids);
+  }
+
+  return Array.from(new Set(resolvedIds));
+}

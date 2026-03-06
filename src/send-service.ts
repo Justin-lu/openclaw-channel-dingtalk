@@ -82,6 +82,14 @@ function isProactivePermissionOrScopeError(code: string | null): boolean {
   );
 }
 
+function resolveAtUserIds(options: SendMessageOptions): string[] {
+  const merged = [
+    ...(Array.isArray(options.atUserIds) ? options.atUserIds : []),
+    options.atUserId || undefined,
+  ].filter((id): id is string => typeof id === "string" && id.trim().length > 0);
+  return Array.from(new Set(merged));
+}
+
 /**
  * Wrapper to upload media with shared getAccessToken binding.
  */
@@ -352,20 +360,22 @@ export async function sendBySession(
 
   // Fallback to text/markdown reply payload.
   const { useMarkdown, title } = detectMarkdownAndExtractTitle(text, options, "Clawdbot 消息");
+  const atUserIds = resolveAtUserIds(options);
+  const hasAt = atUserIds.length > 0;
 
   let body: SessionWebhookResponse;
   if (useMarkdown) {
     let finalText = text;
-    if (options.atUserId) {
-      finalText = `${finalText} @${options.atUserId}`;
+    if (hasAt) {
+      finalText = `${finalText} ${atUserIds.map((id) => `@${id}`).join(" ")}`;
     }
     body = { msgtype: "markdown", markdown: { title, text: finalText } };
   } else {
     body = { msgtype: "text", text: { content: text } };
   }
 
-  if (options.atUserId) {
-    body.at = { atUserIds: [options.atUserId], isAtAll: false };
+  if (hasAt) {
+    body.at = { atUserIds, isAtAll: false };
   }
 
   const result = await axios({
