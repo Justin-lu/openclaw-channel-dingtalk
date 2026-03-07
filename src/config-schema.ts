@@ -67,6 +67,9 @@ const DingTalkAccountConfigSchema = z.object({
     )
     .optional(),
 
+  /** Manual mention name to userId mapping (fallback when group member store has no match) */
+  mentionAliases: z.record(z.string(), z.string()).optional(),
+
   /** Connection robustness configuration */
 
   /** Maximum number of connection attempts before giving up (default: 10) */

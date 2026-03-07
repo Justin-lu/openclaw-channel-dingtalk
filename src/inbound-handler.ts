@@ -8,7 +8,11 @@ import {
   isCardInTerminalState,
 } from "./card-service";
 import { resolveGroupConfig } from "./config";
-import { formatGroupMembers, noteGroupMember } from "./group-members-store";
+import {
+  formatGroupMembers,
+  noteGroupMember,
+  resolveMentionedUserIds,
+} from "./group-members-store";
 import { setCurrentLogger } from "./logger-context";
 import { extractMessageContent } from "./message-utils";
 import { registerPeerId } from "./peer-id-registry";
@@ -386,6 +390,18 @@ export async function handleDingTalkMessage(params: HandleDingTalkMessageParams)
     noteGroupMember(storePath, groupId, senderId, senderName);
   }
   const groupMembers = !isDirect ? formatGroupMembers(storePath, groupId) : undefined;
+  const resolveAtOptions = (messageText: string) => {
+    if (isDirect) {
+      return { atUserId: null as string | null, atUserIds: [] as string[] };
+    }
+    const mentionedUserIds = resolveMentionedUserIds(storePath, groupId, messageText, {
+      mentionAliases: dingtalkConfig.mentionAliases,
+    }).filter((id) => id !== senderId);
+    return {
+      atUserId: senderId,
+      atUserIds: [senderId, ...mentionedUserIds],
+    };
+  };
 
   const fromLabel = isDirect ? `${senderName} (${senderId})` : `${groupName} - ${senderName}`;
   const body = rt.channel.reply.formatInboundEnvelope({
@@ -456,7 +472,7 @@ export async function handleDingTalkMessage(params: HandleDingTalkMessageParams)
           lastCardContent = thinkingText;
           const sendResult = await sendMessage(dingtalkConfig, to, thinkingText, {
             sessionWebhook,
-            atUserId: !isDirect ? senderId : null,
+            ...resolveAtOptions(thinkingText),
             log,
             card: currentAICard,
           });
@@ -511,7 +527,7 @@ export async function handleDingTalkMessage(params: HandleDingTalkMessageParams)
                 if (toolText) {
                   const sendResult = await sendMessage(dingtalkConfig, to, toolText, {
                     sessionWebhook,
-                    atUserId: !isDirect ? senderId : null,
+                    ...resolveAtOptions(toolText),
                     log,
                     card: currentAICard,
                     cardUpdateMode: "append",
@@ -527,7 +543,7 @@ export async function handleDingTalkMessage(params: HandleDingTalkMessageParams)
               lastCardContent = textToSend;
               const sendResult = await sendMessage(dingtalkConfig, to, textToSend, {
                 sessionWebhook,
-                atUserId: !isDirect ? senderId : null,
+                ...resolveAtOptions(textToSend),
                 log,
                 card: currentAICard,
               });
@@ -561,7 +577,7 @@ export async function handleDingTalkMessage(params: HandleDingTalkMessageParams)
             try {
               const sendResult = await sendMessage(dingtalkConfig, to, thinkingText, {
                 sessionWebhook,
-                atUserId: !isDirect ? senderId : null,
+                ...resolveAtOptions(thinkingText),
                 log,
                 card: currentAICard,
                 cardUpdateMode: "append",

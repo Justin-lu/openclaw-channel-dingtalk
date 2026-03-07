@@ -590,6 +590,12 @@ export const dingtalkPlugin: DingTalkChannelPlugin = {
         try {
           const data = JSON.parse(res.data) as DingTalkInboundMessage;
 
+          if (config.debug) {
+            ctx.log?.debug?.(
+              `[${account.accountId}] Inbound message chatbotUserId=${data.chatbotUserId ?? "(empty)"} conversationId=${data.conversationId} senderId=${data.senderId}`,
+            );
+          }
+
           // Message deduplication key is bot-scoped to avoid cross-account conflicts.
           const robotKey = config.robotCode || config.clientId || account.accountId;
           const msgId = data.msgId || messageId;
