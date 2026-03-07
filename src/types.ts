@@ -49,6 +49,7 @@ export interface DingTalkConfig extends OpenClawConfig {
   cardTemplateId?: string;
   cardTemplateKey?: string;
   groups?: Record<string, { systemPrompt?: string }>;
+  mentionAliases?: Record<string, string>;
   accounts?: Record<string, DingTalkConfig>;
   // Connection robustness configuration
   maxConnectionAttempts?: number;
@@ -89,6 +90,7 @@ export interface DingTalkChannelConfig {
   cardTemplateId?: string;
   cardTemplateKey?: string;
   groups?: Record<string, { systemPrompt?: string }>;
+  mentionAliases?: Record<string, string>;
   accounts?: Record<string, DingTalkConfig>;
   maxConnectionAttempts?: number;
   initialReconnectDelay?: number;
@@ -581,6 +583,7 @@ export function resolveDingTalkAccount(
       cardTemplateId: dingtalk?.cardTemplateId,
       cardTemplateKey: dingtalk?.cardTemplateKey,
       groups: dingtalk?.groups,
+      mentionAliases: dingtalk?.mentionAliases,
       accounts: dingtalk?.accounts,
       maxConnectionAttempts: dingtalk?.maxConnectionAttempts,
       initialReconnectDelay: dingtalk?.initialReconnectDelay,

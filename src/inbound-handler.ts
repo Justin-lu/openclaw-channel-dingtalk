@@ -394,9 +394,9 @@ export async function handleDingTalkMessage(params: HandleDingTalkMessageParams)
     if (isDirect) {
       return { atUserId: null as string | null, atUserIds: [] as string[] };
     }
-    const mentionedUserIds = resolveMentionedUserIds(storePath, groupId, messageText).filter(
-      (id) => id !== senderId,
-    );
+    const mentionedUserIds = resolveMentionedUserIds(storePath, groupId, messageText, {
+      mentionAliases: dingtalkConfig.mentionAliases,
+    }).filter((id) => id !== senderId);
     return {
       atUserId: senderId,
       atUserIds: [senderId, ...mentionedUserIds],
